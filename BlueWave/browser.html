@@ -24,7 +24,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
-    header img {
+    header img.logo {
       height: 32px;
       width: 32px;
       border-radius: 50%;
@@ -48,10 +48,18 @@
       font-weight: bold;
       cursor: pointer;
       transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     header button:hover {
       background: rgba(255,255,255,0.7);
+    }
+
+    header button img {
+      width: 18px;
+      height: 18px;
     }
 
     iframe {
@@ -66,18 +74,65 @@
       font-size: 18px;
       margin-right: 10px;
     }
+
+    /* Tabs */
+    #tabs {
+      display: flex;
+      background: #1976d2;
+      padding: 4px 6px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      background: #2196f3;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px 6px 0 0;
+      margin-right: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .tab.active {
+      background: white;
+      color: #1976d2;
+      font-weight: bold;
+    }
+
+    .tab button {
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #newTab {
+      background: #64b5f6;
+      border-radius: 6px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="BlueWave Logo">
+    <img src="logo.png" alt="BlueWave Logo" class="logo">
     <span class="title">BlueWave</span>
-    <button onclick="goBack()">⟨</button>
-    <button onclick="goForward()">⟩</button>
+    <button onclick="goBack()"><img src="backward.png" alt="Back"></button>
+    <button onclick="goForward()"><img src="forward.png" alt="Forward"></button>
     <button onclick="reloadPage()">⟳</button>
     <input type="text" id="urlInput" placeholder="Enter URL (e.g. https://example.com)">
-    <button onclick="goToPage()">Go</button>
+    <button onclick="goToPage()" style="background:none;border:none;padding:0;cursor:pointer;">
+      <img src="button.png" alt="Go" style="width:28px;height:28px;border-radius:50%;transition:transform 0.2s;">
+    </button>
   </header>
+
+  <div id="tabs"></div>
   <iframe id="browserFrame" src="https://www.example.com"></iframe>
 
   <script>
@@ -113,97 +168,53 @@
         frame.src = historyList[historyIndex];
       }
     }
+
+    // Tabs System
+    const tabsContainer = document.getElementById('tabs');
+    let tabs = [];
+    let activeTab = null;
+
+    function createTab(url = 'https://www.google.com') {
+      const tab = document.createElement('div');
+      tab.classList.add('tab');
+      tab.innerHTML = `<span>${new URL(url).hostname}</span><button onclick="closeTab(event)">×</button>`;
+      tab.onclick = () => switchTab(tab, url);
+
+      tabsContainer.insertBefore(tab, document.getElementById('newTab'));
+      tabs.push({ tab, url });
+      switchTab(tab, url);
+    }
+
+    function switchTab(tab, url) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeTab = tab;
+      frame.src = url;
+    }
+
+    function closeTab(event) {
+      event.stopPropagation();
+      const tab = event.target.parentElement;
+      const index = tabs.findIndex(t => t.tab === tab);
+      if (index > -1) tabs.splice(index, 1);
+      tab.remove();
+
+      if (tab.classList.contains('active')) {
+        if (tabs.length > 0) switchTab(tabs[0].tab, tabs[0].url);
+        else frame.src = 'about:blank';
+      }
+    }
+
+    // Add + button for new tabs
+    const newTabBtn = document.createElement('div');
+    newTabBtn.id = 'newTab';
+    newTabBtn.classList.add('tab');
+    newTabBtn.textContent = '+';
+    newTabBtn.onclick = () => createTab();
+    tabsContainer.appendChild(newTabBtn);
+
+    // Create first tab automatically
+    createTab();
   </script>
 </body>
-<!-- Tabs System -->
-<style>
-  #tabs {
-    display: flex;
-    background: #1976d2;
-    padding: 4px 6px;
-    overflow-x: auto;
-  }
-  .tab {
-    background: #2196f3;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px 6px 0 0;
-    margin-right: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    white-space: nowrap;
-    transition: background 0.2s;
-  }
-  .tab.active {
-    background: white;
-    color: #1976d2;
-    font-weight: bold;
-  }
-  .tab button {
-    background: transparent;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  #newTab {
-    background: #64b5f6;
-    border-radius: 6px;
-    font-weight: bold;
-  }
-</style>
-
-<div id="tabs"></div>
-
-<script>
-  const tabsContainer = document.getElementById('tabs');
-  let tabs = [];
-  let activeTab = null;
-
-  function createTab(url = 'https://www.google.com') {
-    const tab = document.createElement('div');
-    tab.classList.add('tab');
-    tab.innerHTML = `<span>${new URL(url).hostname}</span><button onclick="closeTab(event)">×</button>`;
-    tab.onclick = () => switchTab(tab, url);
-
-    tabsContainer.insertBefore(tab, document.getElementById('newTab'));
-    tabs.push({ tab, url });
-    switchTab(tab, url);
-  }
-
-  function switchTab(tab, url) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    activeTab = tab;
-    document.getElementById('browserFrame').src = url;
-  }
-
-  function closeTab(event) {
-    event.stopPropagation();
-    const tab = event.target.parentElement;
-    const index = tabs.findIndex(t => t.tab === tab);
-    if (index > -1) tabs.splice(index, 1);
-    tab.remove();
-
-    if (tab.classList.contains('active')) {
-      if (tabs.length > 0) switchTab(tabs[0].tab, tabs[0].url);
-      else document.getElementById('browserFrame').src = 'about:blank';
-    }
-  }
-
-  // Add + button for new tabs
-  const newTabBtn = document.createElement('div');
-  newTabBtn.id = 'newTab';
-  newTabBtn.classList.add('tab');
-  newTabBtn.textContent = '+';
-  newTabBtn.onclick = () => createTab();
-  tabsContainer.appendChild(newTabBtn);
-
-  // Create first tab automatically
-  createTab();
-</script>
-
 </html>
